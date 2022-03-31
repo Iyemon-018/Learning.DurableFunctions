@@ -62,8 +62,8 @@ namespace Learning.DurableFunctions
             // Function input comes from the request content.
 
             // こんな感じでリクエストボディも取得するしてオーケストレーション関数にわたすことができる。
-            dynamic eventData  = await req.Content.ReadAsAsync<object>();
-            string instanceId = await starter.StartNewAsync(functionName, eventData.testvalue);
+            object eventData  = await req.Content.ReadAsAsync<object>();
+            string instanceId = await starter.StartNewAsync(functionName, eventData);
 
             log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
 
