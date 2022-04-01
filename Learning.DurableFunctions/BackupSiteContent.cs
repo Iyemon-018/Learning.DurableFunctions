@@ -12,6 +12,8 @@ namespace Learning.DurableFunctions
     using System;
     using System.IO;
     using System.Linq;
+    using System.Security.AccessControl;
+    using System.Security.Principal;
     using Azure.Storage.Blobs;
     using Microsoft.WindowsAzure.Storage.Blob;
 
@@ -35,6 +37,12 @@ namespace Learning.DurableFunctions
             // 入力パラメータで受け取ったディレクトリから再起ファイルパスのリストを取得するための関数を呼び出す。
             string[] files = await context.CallActivityAsync<string[]>("E2_GetFileList", rootDirectory);
 
+            // ファンアウト・ファンインの肝はこれ。
+            // すべてのアクティビティ関数を Task で待機させて await Task.WhenAll(tasks) で並列実行させる。
+            // これにより E2_GetFileList のようにファイルの列挙と
+            // E2_CopyFileToBlob のようにアップロードを分けても複雑にならないメリットが有る。
+            // このような状態管理と調整が同時に実行するようなケースにおいて ファンアウト・ファンイン は有効な手段となる。
+
             // 受け取ったファイルパスを Azure Blog Storage にアップロードする。
             var tasks = new Task<long>[files.Length];
             for (int i = 0; i < files.Length; i++)
@@ -43,6 +51,8 @@ namespace Learning.DurableFunctions
             }
 
             await Task.WhenAll(tasks);
+
+            // タスク実行後に続けてなにかやってもいい。
 
             // アップロードしたファイルの合計サイズを戻り値とする。
             long totalBytes = tasks.Sum(t => t.Result);
@@ -78,18 +88,27 @@ namespace Learning.DurableFunctions
         /// <param name="log"></param>
         /// <returns>アップロードしたファイルのバイトサイズを返します。</returns>
         [FunctionName("E2_CopyFileToBlob")]
-        public static async Task<long> CopyFileToBlob([ActivityTrigger] string filePath, Binder binder, ILogger log)
+        public static async Task<long> CopyFileToBlob([ActivityTrigger] string filePath, ILogger log)
         {
+            // Blob Storage は .NET のバージョンによって失敗していたので、とりあえずローカルストレージでファイルをコピーする方法に切り替えている。
             long   byteCount      = new FileInfo(filePath).Length;
-            string blobPath       = filePath.Substring(Path.GetPathRoot(filePath).Length).Replace('\\', '/');
-            string outputLocation = $"backups/{blobPath}";
+            //string blobPath       = filePath.Substring(Path.GetPathRoot(filePath).Length).Replace('\\', '/');
+            //string outputLocation = $"backups/{blobPath}";
+            string blobPath       = Path.Combine(Path.GetTempPath(), nameof(BackupSiteContent));
+            string outputLocation = Path.Combine(blobPath, Path.GetFileName(filePath));
+            if (!Directory.Exists(blobPath))
+            {
+                Directory.CreateDirectory(blobPath);
+            }
 
             log.LogInformation($"Copy `{filePath}` to `{outputLocation}`. Total bytes = {byteCount}.");
 
-            await using Stream source      = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            await using Stream destination = await binder.BindAsync<CloudBlobStream>(new BlobAttribute(outputLocation));
+            //await using Stream source      = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            //await using Stream destination = await binder.BindAsync<CloudBlobStream>(new BlobAttribute(outputLocation));
             
-            await source.CopyToAsync(destination);
+            //await source.CopyToAsync(destination);
+
+            File.Copy(filePath, outputLocation);
 
             return byteCount;
         }
