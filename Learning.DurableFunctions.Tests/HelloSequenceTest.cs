@@ -69,5 +69,26 @@ namespace Learning.DurableFunctions.Tests
             result[1].Is("Hello Seattle!");
             result[2].Is("Hello London");
         }
+
+        [Fact]
+        public void Test_シナリオ_SayHello()
+        {
+            var durableActivityContextMock = new Mock<IDurableActivityContext>();
+            var loggerMock                 = new Mock<ILogger>();
+
+            durableActivityContextMock.Setup(x => x.GetInput<string>()).Returns("John");
+
+            HelloSequence.SayHello(durableActivityContextMock.Object, loggerMock.Object)
+                         .Is("Hello John!");
+        }
+
+        [Fact]
+        public void Test_シナリオ_SayHelloDirect()
+        {
+            var loggerMock = new Mock<ILogger>();
+
+            HelloSequence.SayHelloDirect("John", loggerMock.Object)
+                         .Is("Hello John");
+        }
     }
 }
