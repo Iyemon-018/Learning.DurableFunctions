@@ -5,6 +5,8 @@ VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Learning.DurableFunctions", "Learning.DurableFunctions\Learning.DurableFunctions.csproj", "{1CD3D652-186F-471E-A7F0-826890C286D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Learning.DurableFunctions.Tests", "Learning.DurableFunctions.Tests\Learning.DurableFunctions.Tests.csproj", "{C10731C7-EA02-4A2A-98E2-08EAE6E003CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{1CD3D652-186F-471E-A7F0-826890C286D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CD3D652-186F-471E-A7F0-826890C286D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CD3D652-186F-471E-A7F0-826890C286D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C10731C7-EA02-4A2A-98E2-08EAE6E003CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C10731C7-EA02-4A2A-98E2-08EAE6E003CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C10731C7-EA02-4A2A-98E2-08EAE6E003CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C10731C7-EA02-4A2A-98E2-08EAE6E003CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
