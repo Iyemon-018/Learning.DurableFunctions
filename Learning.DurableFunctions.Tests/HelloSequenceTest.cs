@@ -16,6 +16,8 @@ namespace Learning.DurableFunctions.Tests
     {
         // cf. https://docs.microsoft.com/ja-jp/azure/azure-functions/durable/durable-functions-unit-testing
 
+        private readonly Mock<ILogger> _loggerMock = new Mock<ILogger>();
+
         [Fact]
         public async Task Test_シナリオ_HttpStart()
         {
@@ -23,6 +25,10 @@ namespace Learning.DurableFunctions.Tests
             var functionName      = "Function1";
             var instanceId        = "123";
 
+            // IDurableClient.StartNewAsync
+            // IDurableClient.CreateCheckStatusResponse
+            // この２つは、HttpStart メソッド内部で呼び出されるのでモックが必要になる。
+            // 以下の .Returns の値はサンプルなので、実際のコードだと適宜修正する必要がある。
             durableClientMock.Setup(x => x.StartNewAsync(functionName, It.IsAny<object>()))
                              .ReturnsAsync(instanceId);
 
@@ -37,8 +43,6 @@ namespace Learning.DurableFunctions.Tests
                                           }
                                       });
 
-            var logger = new Mock<ILogger>();
-
             var result = await HelloSequence.HttpStart(new HttpRequestMessage
                                                        {
                                                            Content    = new StringContent("{}", Encoding.UTF8, "application/json")
@@ -46,9 +50,13 @@ namespace Learning.DurableFunctions.Tests
                                                        }
                   , durableClientMock.Object
                   , functionName
-                  , logger.Object);
+                  , _loggerMock.Object);
 
             result.IsNotNull();
+
+            // Durable Functions では応答結果に、IDurableClient.CreateCheckStatusResponse の戻り値が返るような仕組みになっている。
+            // この値が正常に返ってきているかどうかを以下で検証している。
+            // CreateCheckStatusResponse をモックにしているので、モックで指定した値が返ってきていれば問題ない、という判断になっている。
             result.Headers.RetryAfter.Delta.Is(TimeSpan.FromSeconds(10));
         }
 
@@ -56,13 +64,14 @@ namespace Learning.DurableFunctions.Tests
         public async Task Test_シナリオ_RunOrchestrator()
         {
             var durableOrchestrationContextMock = new Mock<IDurableOrchestrationContext>();
-            var loggerMock                          = new Mock<ILogger>();
 
+            // IDurableOrchestrationContext.CallActivityAsync で指定したアクティビティ関数名と input の値は正確に指定しないと
+            // Moq の ReturnsAsync の値が正しく返ってこないので注意する。
             durableOrchestrationContextMock.Setup(x => x.CallActivityAsync<string>("E1_SayHello", "Tokyo")).ReturnsAsync("Hello Tokyo!");
             durableOrchestrationContextMock.Setup(x => x.CallActivityAsync<string>("E1_SayHello", "Seattle")).ReturnsAsync("Hello Seattle!");
             durableOrchestrationContextMock.Setup(x => x.CallActivityAsync<string>("E1_SayHelloDirect", "London")).ReturnsAsync("Hello London");
 
-            var result = await HelloSequence.RunOrchestrator(durableOrchestrationContextMock.Object, loggerMock.Object);
+            var result = await HelloSequence.RunOrchestrator(durableOrchestrationContextMock.Object, _loggerMock.Object);
 
             result.Count.Is(3);
             result[0].Is("Hello Tokyo!");
@@ -74,20 +83,17 @@ namespace Learning.DurableFunctions.Tests
         public void Test_シナリオ_SayHello()
         {
             var durableActivityContextMock = new Mock<IDurableActivityContext>();
-            var loggerMock                 = new Mock<ILogger>();
 
             durableActivityContextMock.Setup(x => x.GetInput<string>()).Returns("John");
 
-            HelloSequence.SayHello(durableActivityContextMock.Object, loggerMock.Object)
+            HelloSequence.SayHello(durableActivityContextMock.Object, _loggerMock.Object)
                          .Is("Hello John!");
         }
 
         [Fact]
         public void Test_シナリオ_SayHelloDirect()
         {
-            var loggerMock = new Mock<ILogger>();
-
-            HelloSequence.SayHelloDirect("John", loggerMock.Object)
+            HelloSequence.SayHelloDirect("John", _loggerMock.Object)
                          .Is("Hello John");
         }
     }
