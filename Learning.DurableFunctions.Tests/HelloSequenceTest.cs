@@ -51,5 +51,23 @@ namespace Learning.DurableFunctions.Tests
             result.IsNotNull();
             result.Headers.RetryAfter.Delta.Is(TimeSpan.FromSeconds(10));
         }
+
+        [Fact]
+        public async Task Test_ƒVƒiƒŠƒI_RunOrchestrator()
+        {
+            var durableOrchestrationContextMock = new Mock<IDurableOrchestrationContext>();
+            var loggerMock                          = new Mock<ILogger>();
+
+            durableOrchestrationContextMock.Setup(x => x.CallActivityAsync<string>("E1_SayHello", "Tokyo")).ReturnsAsync("Hello Tokyo!");
+            durableOrchestrationContextMock.Setup(x => x.CallActivityAsync<string>("E1_SayHello", "Seattle")).ReturnsAsync("Hello Seattle!");
+            durableOrchestrationContextMock.Setup(x => x.CallActivityAsync<string>("E1_SayHelloDirect", "London")).ReturnsAsync("Hello London");
+
+            var result = await HelloSequence.RunOrchestrator(durableOrchestrationContextMock.Object, loggerMock.Object);
+
+            result.Count.Is(3);
+            result[0].Is("Hello Tokyo!");
+            result[1].Is("Hello Seattle!");
+            result[2].Is("Hello London");
+        }
     }
 }
