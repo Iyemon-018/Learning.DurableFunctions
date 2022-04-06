@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="ChainingAssertion.Core.Xunit" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.6.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Include="Moq" Version="4.17.2" />
     <PackageReference Include="xunit" Version="2.4.1" />
@@ -20,6 +22,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Learning.DurableFunctions\Learning.DurableFunctions.csproj" />
   </ItemGroup>
 
 </Project>
